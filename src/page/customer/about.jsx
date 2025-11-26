@@ -1,6 +1,33 @@
 "use client"
 import { Shield, Zap, Eye } from "lucide-react"
+import Suites from "../../../public/image/suites.jpg"
+import Nv1 from "../../../public/image/nv1.jpg"
+import Nv2 from "../../../public/image/nv2.jpg"
+import Nv3 from "../../../public/image/nv3.jpg"
+import Nv4 from "../../../public/image/nv4.webp"
 
+const employee=[
+  {
+    id: 1,
+    name: "Nguyễn Văn A",
+    image: Nv1,
+  },
+  {
+    id: 2,
+    name: "Nguyễn Văn B",
+    image: Nv2,
+  },
+  {
+    id: 3,
+    name: "Nguyễn Văn C",
+    image: Nv3,
+  },
+  {
+    id: 4,
+    name: "Nguyễn Văn D",
+    image: Nv4,
+  }
+]
 function About() {
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -15,9 +42,8 @@ function About() {
         {/* Introduction Section */}
         <div className="bg-white p-6 rounded-lg border border-gray-300 shadow-sm mb-8">
           <div className="flex flex-col md:flex-row gap-8 items-center">
-            <div className="w-full md:w-1/3 h-48 bg-gray-200 rounded flex items-center justify-center border border-gray-300 relative">
-              <span className="text-gray-500 font-medium">Hình ảnh giới thiệu</span>
-              <div className="absolute inset-0 border-2 border-gray-400 border-dashed m-2"></div>
+            <div className="w-1/3">
+              <img src={Suites} alt="" />
             </div>
             <div className="flex-1">
               <p className="text-gray-600 leading-relaxed italic font-serif">
@@ -83,17 +109,18 @@ function About() {
         {/* Team */}
         <h3 className="text-center text-xl font-bold mb-6">Đội Ngũ Của Chúng Tôi</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((item) => (
+          {employee.map((item) => (
             <div key={item} className="bg-white p-4 rounded-lg border border-gray-300 shadow-sm text-center">
               <div className="w-full aspect-square bg-gray-200 rounded mb-3 border border-gray-300 relative overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                {/* <div className="absolute inset-0 flex items-center justify-center text-gray-400">
                   <div className="w-12 h-12 border-2 border-gray-400 border-dashed transform rotate-45"></div>
-                </div>
+                </div> */}
+                <img src={item.image} alt="" />
               </div>
               <div className="space-y-2">
-                <div className="h-2 w-24 bg-gray-200 mx-auto rounded"></div>
-                <div className="h-2 w-16 bg-gray-200 mx-auto rounded"></div>
-                <div className="h-10 w-full bg-gray-100 mx-auto rounded mt-2"></div>
+                <div className="text-center">{item.name}</div>
+                {/* <div className="h-2 w-16 bg-gray-200 mx-auto rounded"></div>
+                <div className="h-10 w-full bg-gray-100 mx-auto rounded mt-2"></div> */}
               </div>
             </div>
           ))}

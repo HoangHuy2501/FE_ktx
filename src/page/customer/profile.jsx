@@ -1,10 +1,27 @@
 "use client"
-import { useState } from "react"
-import { User, CreditCard, History, Star, Save } from "lucide-react"
-
+import { useEffect, useState } from "react"
+import { User, CreditCard, History, Save,Check, CheckCircle } from "lucide-react"
+import { getUserId, getUserName } from "../../util/authenticationUtils"
+import {InfoUser,UpdateUser} from "../../services/UserServices"
+import {HistoryBooking,CancelBooking} from "../../services/BookingServices"
+import fmt from "../../util/fmtDate"
+import { toast } from "sonner";
+const userid=getUserId()
+const username=getUserName()
 function Profile() {
   const [activeTab, setActiveTab] = useState("info")
-
+  const [info, setInfo] = useState([])
+  useEffect(() => {
+    const fetchInfo = async () => {
+      try {
+        const response = await InfoUser(userid);
+        setInfo(response.data);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    fetchInfo();
+  }, [userid])
   return (
     <div className="min-h-screen bg-gray-50 pb-12">
       {/* Profile Header */}
@@ -15,8 +32,8 @@ function Profile() {
               SV
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Nguyễn Văn A</h1>
-              <p className="text-blue-100">Mã SV: 20230001 | Ký túc xá Tòa A - Phòng 302</p>
+              <h1 className="text-2xl font-bold">{username}</h1>
+              <p className="text-blue-100">Mã SV: {info?.mssv || "chưa cập nhập"} | Ký túc xá {info?.bookings?.[0]?.room?.suite?.type || "chưa cập nhật"} - Phòng {info?.bookings?.[0]?.room?.numberroom || "chưa cập nhật"}</p>
             </div>
           </div>
         </div>
@@ -60,7 +77,7 @@ function Profile() {
           </div>
 
           <div className="p-6">
-            {activeTab === "info" && <ProfileInfo />}
+            {activeTab === "info" && <ProfileInfo info={info} />}
             {activeTab === "bookings" && <BookingHistory />}
             {activeTab === "payments" && <PaymentHistory />}
           </div>
@@ -70,17 +87,67 @@ function Profile() {
   )
 }
 
-function ProfileInfo() {
+function ProfileInfo({info}) {
+  const [data, setData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    mssv: "",
+    sex: null,
+  })
+  useEffect(() => {
+  if (info) {
+    setData({
+      name: info.name || "",
+      email: info.email || "",
+      phone: info.phone || "",
+      mssv: info.mssv || "",
+      sex: info.sex !== undefined ? info.sex : null,
+    });
+  }
+}, [info]);
+  const handleChange = (e) => {
+  let { name, value } = e.target;
+
+  if (name === "sex") {
+    if (value === "true") value = true;
+    else if (value === "false") value = false;
+    else value = null; // other
+  }
+
+  setData((prev) => ({ ...prev, [name]: value }));
+};
+
+const handleUpdate=async(e)=>{
+  e.preventDefault();
+  try {
+    if(data.sex===null){
+      return toast.error("Chon gioi tinh");
+    }
+    const res=await UpdateUser(userid,data);
+    if(res.success){
+      toast.success("Cap nhat thanh cong");
+    }else{
+      toast.error(res.message);
+    }
+  } catch (error) {
+    toast.error("Cap nhat that bai");
+    console.log(error);
+  }
+}
   return (
     <div className="max-w-2xl">
       <h3 className="text-lg font-bold mb-6">Cập nhật thông tin cá nhân</h3>
-      <form className="space-y-4">
+      <form onSubmit={handleUpdate} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
             <input
               type="text"
-              defaultValue="Nguyễn Văn A"
+              onChange={handleChange}
+              name="name"
+              required
+              value={data.name}
               className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
@@ -88,8 +155,10 @@ function ProfileInfo() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Mã Sinh Viên</label>
             <input
               type="text"
-              defaultValue="20230001"
-              readOnly
+              onChange={handleChange}
+              required
+              name="mssv"
+              value={data.mssv || "không có dữ liệu"}
               className="w-full border border-gray-300 rounded-md p-2 text-sm bg-gray-50 text-gray-500"
             />
           </div>
@@ -100,31 +169,37 @@ function ProfileInfo() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
               type="email"
-              defaultValue="student@university.edu.vn"
+              onChange={handleChange}
+              required
+              name="email"
+              value={data.email}
               className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
             <input
-              type="tel"
-              defaultValue="0901234567"
+              type="number"
+              onChange={handleChange}
+              name="phone"
+              required
+              value={data.phone || "không có dữ liệu"}
               className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Địa chỉ thường trú</label>
-          <input
-            type="text"
-            defaultValue="123 Đường ABC, Quận XYZ, TP.HCM"
-            className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
-          />
+          <label className="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
+          <select name="sex" value={data.sex === true? "true": data.sex === false? "false": "other"} onChange={handleChange} className="w-full border border-gray-300 rounded-md p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            <option value="true">Nam</option>
+            <option value="false">Nữ</option>
+            <option value="other">không có dữ liệu</option>
+          </select>
         </div>
 
         <div className="pt-4">
-          <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium shadow-sm">
+          <button type="submit" className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium shadow-sm">
             <Save size={18} /> Lưu thay đổi
           </button>
         </div>
@@ -134,6 +209,41 @@ function ProfileInfo() {
 }
 
 function BookingHistory() {
+  const [bookings, setBookings] = useState([]);
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const response = await HistoryBooking(userid);
+        // console.log("API Response:", response);
+        // Sắp xếp theo ngày tạo, mới nhất trước
+      const sortedBookings = response.data.sort((a, b) => new Date(b.createat) - new Date(a.createat));
+        setBookings(sortedBookings);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    fetchBookings();
+  }, [userid])
+  console.log("id", bookings);
+  
+  // trả phòng
+  const handleRetrunRoom = async (bookingId) => {
+    try {
+      const res=await CancelBooking(bookingId);
+      if(res.success){
+        toast.success("Trả phòng thanh cong");
+        setTimeout(() => {
+          window.location.reload();
+        },2000)
+      }else{
+        toast.error(res.message);
+      }
+    } catch (error) {
+      toast.error("Trả phòng that bai");
+      console.log(error);
+      
+    }
+  }
   return (
     <div>
       <h3 className="text-lg font-bold mb-4">Lịch sử đặt phòng</h3>
@@ -150,37 +260,35 @@ function BookingHistory() {
             </tr>
           </thead>
           <tbody>
-            <tr className="border-b hover:bg-gray-50">
-              <td className="px-4 py-4 font-medium">#BK-2023-001</td>
+          {bookings.map((booking, index) => (
+            <tr key={booking.id} className={`border-b hover:bg-gray-50 ${booking.status===true ? "" : "opacity-60"}`}>
+              <td className="px-4 py-4 font-medium">{booking.id}</td>
               <td className="px-4 py-4">
-                <div>Tòa A - Phòng 302</div>
-                <div className="text-xs text-gray-500">4 Giường - Máy lạnh</div>
+                <div>{booking.room?.suite?.type} - Phòng {booking.room?.numberroom}</div>
+                <div className="text-xs text-gray-500">{booking.room?.numberpeople} Giường</div>
               </td>
-              <td className="px-4 py-4">HK1 2023-2024</td>
-              <td className="px-4 py-4">15/08/2023</td>
+              <td className="px-4 py-4"> Tháng {booking.bookingmonth}</td>
+              <td className="px-4 py-4">{fmt(booking.createat).date}</td>
               <td className="px-4 py-4">
+              {booking.status === true ?
                 <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">Đã duyệt</span>
-              </td>
-              <td className="px-4 py-4">
-                <button className="text-blue-600 hover:underline">Chi tiết</button>
-                <button className="text-red-600 hover:underline">Trả phòng</button>
-              </td>
-            </tr>
-            <tr className="border-b hover:bg-gray-50 opacity-60">
-              <td className="px-4 py-4 font-medium">#BK-2022-089</td>
-              <td className="px-4 py-4">
-                <div>Tòa B - Phòng 105</div>
-                <div className="text-xs text-gray-500">6 Giường - Quạt</div>
-              </td>
-              <td className="px-4 py-4">HK2 2022-2023</td>
-              <td className="px-4 py-4">10/01/2023</td>
-              <td className="px-4 py-4">
+              :
                 <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">Đã trả phòng</span>
+             }
               </td>
               <td className="px-4 py-4">
-                <button className="text-blue-600 hover:underline">Chi tiết</button>
+              {booking.status === true ?
+                <button
+                onClick={() => handleRetrunRoom(booking.id)} className="text-red-600 hover:underline">Trả phòng</button> 
+                :
+                <span>
+                <CheckCircle size={24} color="green" className="ml-7"/> 
+                </span>
+              }
+                
               </td>
             </tr>
+          ))}
           </tbody>
         </table>
       </div>

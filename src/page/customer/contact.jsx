@@ -1,7 +1,52 @@
 "use client"
 import { MapPin, Mail, Phone, Clock, Facebook, Instagram, Chrome } from "lucide-react"
+import {getUserName,getUserPhone,getUserEmail,getUserId} from "../../util/authenticationUtils"
+import {ListTopic,SendContact} from "../../services/ContactServices"
+import { useEffect, useState } from "react"
+import { toast } from "sonner";
 
 function Contact() {
+  const userid=getUserId()
+  const username=getUserName()
+  const phone=getUserPhone()
+  const email=getUserEmail()
+  const [topic,setTopic]=useState([])
+  const [data,setData]=useState({
+    topicid:"",
+    content:""
+  })
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await ListTopic();
+        setTopic(response.data);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    fetchData();
+  },[])
+  const handleChange=(e)=>{
+    setData({
+      ...data,
+      [e.target.name]:e.target.value
+    })
+  }
+  const handlesubmit=async(e)=>{
+    e.preventDefault();
+    try {
+      const res=await SendContact(data,userid);
+      if(res.success){
+        toast.success("Gửi thành công");
+      }else{
+        toast.error(res.message);
+      }
+    } catch (error) {
+      toast.error("Gửi thất bại");
+      console.log(error);
+    }
+  }
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       {/* Banner */}
@@ -94,19 +139,24 @@ function Contact() {
             <div className="bg-white p-8 rounded-lg border border-gray-300 shadow-sm">
               <h2 className="text-xl font-bold mb-6 border-b pb-2">Gửi tin nhắn cho chúng tôi</h2>
 
-              <form className="space-y-6">
+              <form onSubmit={handlesubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
                     <input
                       type="text"
-                      className="w-full border-b-2 border-gray-300 focus:border-blue-600 outline-none py-2 px-1 bg-gray-50"
+                      value={username}
+                      readOnly
+                      placeholder="huy"
+                      className="w-full border-b-2 border-gray-300 focus:border-blue-600 outline-none py-2 px-1 bg-gray-50 capitalize"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <input
                       type="email"
+                      value={email}
+                      readOnly
                       className="w-full border-b-2 border-gray-300 focus:border-blue-600 outline-none py-2 px-1 bg-gray-50"
                     />
                   </div>
@@ -116,17 +166,19 @@ function Contact() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Số điện thoại</label>
                     <input
-                      type="tel"
+                      type="text"
+                      value={phone || "không có dữ liệu"}
+                      readOnly
                       className="w-full border-b-2 border-gray-300 focus:border-blue-600 outline-none py-2 px-1 bg-gray-50"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Chủ đề</label>
-                    <select className="w-full border-b-2 border-gray-300 focus:border-blue-600 outline-none py-2 px-1 bg-gray-50">
-                      <option>Chọn chủ đề</option>
-                      <option>Tư vấn đặt phòng</option>
-                      <option>Báo cáo sự cố</option>
-                      <option>Khác</option>
+                    <select name="topicid" onChange={handleChange} className="w-full border-b-2 border-gray-300 focus:border-blue-600 outline-none py-2 px-1 bg-gray-50">
+                      <option value="">-- Chọn chủ đề --</option>
+                      {topic.map((item) => (
+                        <option key={item.id} value={item.id}>{item.name}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -135,12 +187,14 @@ function Contact() {
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nội dung tin nhắn</label>
                   <textarea
                     rows={6}
+                    onChange={handleChange}
+                    name="content"
                     className="w-full border border-gray-300 rounded p-3 focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50"
                   ></textarea>
                 </div>
 
                 <button
-                  type="button"
+                  type="submit"
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded shadow-md transition-colors flex items-center justify-center gap-2"
                 >
                   Gửi tin nhắn

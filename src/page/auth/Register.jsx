@@ -1,7 +1,35 @@
 "use client"
-import {Link} from "react-router-dom";
+import {Link,useNavigate} from "react-router-dom";
+import {RegisterUser} from "../../services/AuthServices"
+import { toast } from "sonner";
+import { useState } from "react"
 
 function Register() {
+   const navigator=useNavigate()
+    const [data,setData]=useState({
+      name:"",
+      email:"",
+      password:"",
+      phone:"",
+      mssv:""
+    })
+    const handleChange=(e)=>{
+    setData({
+      ...data,
+      [e.target.name]:e.target.value
+    })
+  }
+  const handleSubmit=async(e)=>{
+    e.preventDefault();
+    try {
+      const res=await RegisterUser(data);
+      toast.success("Register successfully");
+      navigator("/login")
+    } catch (error) {
+      toast.error("Register failed");
+      console.log(error);
+    }
+  }
   return (
     <div className="min-h-[calc(100vh-60px)] bg-gray-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg border border-gray-400 shadow-sm relative">
@@ -15,11 +43,14 @@ function Register() {
           <p className="mt-2 text-sm text-gray-500">Tạo tài khoản để sử dụng đầy đủ tính năng của DormSpace</p>
         </div>
 
-        <form className="mt-8 space-y-5">
+        <form onSubmit={handleSubmit} className="mt-8 space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
             <input
               type="text"
+              name="name"
+              onChange={handleChange}
+              required
               className="appearance-none block w-full px-3 py-2 border border-gray-800 placeholder-gray-400 text-gray-900 rounded-sm focus:outline-none focus:ring-black focus:border-black sm:text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]"
               placeholder="Họ Và Tên Của Bạn"
             />
@@ -29,6 +60,9 @@ function Register() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
               type="email"
+              name="email"
+              onChange={handleChange}
+              required
               className="appearance-none block w-full px-3 py-2 border border-gray-800 placeholder-gray-400 text-gray-900 rounded-sm focus:outline-none focus:ring-black focus:border-black sm:text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]"
               placeholder="Email Của Bạn"
             />
@@ -37,7 +71,10 @@ function Register() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Số Điện Thoại</label>
             <input
-              type="tel"
+              type="number"
+              name="phone"
+              onChange={handleChange}
+              required
               className="appearance-none block w-full px-3 py-2 border border-gray-800 placeholder-gray-400 text-gray-900 rounded-sm focus:outline-none focus:ring-black focus:border-black sm:text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]"
               placeholder="Số Điện Thoại Của Bạn"
             />
@@ -47,8 +84,22 @@ function Register() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Mật Khẩu</label>
             <input
               type="password"
+              name="password"
+              onChange={handleChange}
+              required
               className="appearance-none block w-full px-3 py-2 border border-gray-800 placeholder-gray-400 text-gray-900 rounded-sm focus:outline-none focus:ring-black focus:border-black sm:text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]"
               placeholder="Tạo Mật Khẩu (Ít nhất 8 ký tự)"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">MSSV</label>
+            <input
+              type="number"
+              name="mssv"
+              onChange={handleChange}
+              required
+              className="appearance-none block w-full px-3 py-2 border border-gray-800 placeholder-gray-400 text-gray-900 rounded-sm focus:outline-none focus:ring-black focus:border-black sm:text-sm shadow-[2px_2px_0px_0px_rgba(0,0,0,0.1)]"
+              placeholder="Nhập mã số sinh viên"
             />
           </div>
 

@@ -8,6 +8,7 @@ import Register from './page/auth/Register.jsx'
 import LayoutCustomer from './layout/LayoutCustomer.jsx'
 import LayoutAuth from './layout/LayoutAuth.jsx'
 import {Routes, Route} from 'react-router-dom'
+
 import './App.css'
 
 function App() {

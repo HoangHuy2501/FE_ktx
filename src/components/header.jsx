@@ -1,9 +1,39 @@
 "use client";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { Menu } from "lucide-react";
-
+import {removeAuthToken, getUserRole, getUserName} from "../util/authenticationUtils";
+import { toast } from "sonner";
+import { useEffect } from "react";
 function Header() {
-  // Header chính cho các trang public (như hình 1, 5, 6, 7)
+  const navigator=useNavigate();
+  const username=getUserName();
+  useEffect(() => {
+    const checkRole = async () => {
+      try {
+        const role = await getUserRole();
+        console.log("role:",role);
+        
+        if(!role){
+          navigator("/login")
+        }
+      } catch (error) {
+        console.log(error);
+        
+      }
+    }
+    checkRole();
+  },[navigator])
+  // đăng xuất
+  const handleLogout=async()=>{
+    try {
+      await removeAuthToken();
+      toast.success("Đăng xuat thanh cong");
+      navigator("/login")
+    } catch (error) {
+      toast.error("Đăng xuat that bai");
+      console.log(error);
+    }
+  }
   return (
     <header className="bg-white shadow-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -46,15 +76,6 @@ function Header() {
           </NavLink>
 
           <div className="h-4 w-[1px] bg-gray-300"></div>
-
-          {/* <NavLink
-            to="/news"
-            className={({ isActive }) =>
-              `hover:text-blue-600 ${isActive ? "text-blue-600" : ""}`
-            }
-          >
-            Bài viết
-          </NavLink> */}
         </nav>
         {/* Auth Buttons */}
         <div className="hidden md:flex items-center gap-3">
@@ -62,15 +83,15 @@ function Header() {
             to="/profile"
             className="text-blue-600 hover:text-blue-800 font-bold text-sm mr-2"
           >
-            Chào, Sinh Viên A
+            Chào,<span className="capitalize ml-2">{username}</span> 
           </NavLink>
           <div className="h-6 w-[1px] bg-gray-300"></div>
-          <NavLink
-            to="/login"
+          <button
+            onClick={handleLogout}
             className="text-gray-600 hover:text-blue-600 font-medium text-sm"
           >
             Đăng Xuất
-          </NavLink>
+          </button>
         </div>
 
         {/* Mobile Menu Button */}
