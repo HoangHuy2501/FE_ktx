@@ -22,14 +22,19 @@ function Login() {
     try {
       const res=await LoginUser(data);
       await saveUserDataFromToken(res.data);
+      if(res.success){
         if(res.data.role==="student"){
           navigator("/dashboard")
           toast.success("Login successfully");
         }
         else{
           // navigator("/admin")
-        Arlert("admin")
+        navigator("/admin")
+        toast.success("Login successfully");
         }
+      }else{
+        toast.error(res.message);
+      }
     } catch (error) {
       toast.error("Login failed");
       console.log(error);
