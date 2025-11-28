@@ -11,6 +11,10 @@ import About from './page/customer/about.jsx'
 import Contact from './page/customer/contact.jsx'
 import Profile from './page/customer/profile.jsx'
 import LayoutCustomer from './layout/LayoutCustomer.jsx'
+import LayoutAuth from './layout/LayoutAuth.jsx'
+import {Routes, Route} from 'react-router-dom'
+
+import './App.css'
 
 // ADMIN
 import LayoutAdmin from "./layout/LayoutAdmin.jsx";

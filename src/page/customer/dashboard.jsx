@@ -1,73 +1,71 @@
 "use client"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { MapPin, ArrowLeft } from "lucide-react"
+import Suites from "../../../public/image/suites.jpg"
+import Room from "../../../public/image/room.jpg"
+import {ListSuites, ListRoomBySuites, CountRoom} from "../../services/SuitesAndRoom"
+import {BookingRoom} from "../../services/BookingServices"
+import {getUserId} from "../../util/authenticationUtils"
 import { toast } from "sonner"
-
-const BUILDINGS = [
-  {
-    id: 1,
-    name: "Tòa nhà A",
-    description: "Khu dành cho nam, gần sân vận động",
-    image: "/placeholder.svg?height=300&width=400&text=Tòa+nhà+A",
-  },
-  {
-    id: 2,
-    name: "Tòa nhà B",
-    description: "Khu dành cho nữ, gần thư viện",
-    image: "/placeholder.svg?height=300&width=400&text=Tòa+nhà+B",
-  },
-  {
-    id: 3,
-    name: "Tòa nhà C",
-    description: "Khu dịch vụ và phòng chất lượng cao",
-    image: "/placeholder.svg?height=300&width=400&text=Tòa+nhà+C",
-  },
-  {
-    id: 4,
-    name: "Tòa nhà D",
-    description: "Khu mới xây dựng, đầy đủ tiện nghi",
-    image: "/placeholder.svg?height=300&width=400&text=Tòa+nhà+D",
-  },
-]
-
-const ROOMS_DATA = [
-  { id: 101, buildingId: 1, name: "Phòng 101", type: "4 Giường", price: "500.000đ", status: "Còn trống" },
-  { id: 102, buildingId: 1, name: "Phòng 102", type: "6 Giường", price: "400.000đ", status: "Đã đầy" },
-  { id: 103, buildingId: 1, name: "Phòng 103", type: "8 Giường", price: "300.000đ", status: "Còn trống" },
-  { id: 201, buildingId: 2, name: "Phòng 201", type: "4 Giường", price: "500.000đ", status: "Còn trống" },
-  { id: 202, buildingId: 2, name: "Phòng 202", type: "6 Giường", price: "400.000đ", status: "Còn trống" },
-  { id: 301, buildingId: 3, name: "Phòng 301", type: "2 Giường", price: "1.500.000đ", status: "Còn trống" },
-]
+import {formatPrice} from "../../util/formatPrice"
 
 function Dashboard() {
   const [selectedBuilding, setSelectedBuilding] = useState(null)
+  const [listSuites,setListSuites]=useState([])
+  const [room, setRoom] = useState([])
+  const [countRoom, setCountRoom] = useState(null)
+  const userid=getUserId()
 
-  const handleBuildingClick = (building) => {
-    setSelectedBuilding(building)
+  // lấy danh sách khu tòa
+  useEffect(() => {
+    const fetchSuites = async () => {
+      try {
+        const response = await ListSuites();
+        setListSuites(response.data);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    
+    fetchSuites();
+    
+  },[])
+
+  
+  const handleBuildingClick =async (id) => {
+    try {
+        const response1 = await ListRoomBySuites(id);
+        const response2 = await CountRoom(id);
+        setRoom(response1.data);
+        setCountRoom(response2.data);
+        setSelectedBuilding(id)
+      } catch (error) {
+        console.log(error);
+      }
+    
   }
-
+  console.log("suites", listSuites);
+  console.log("room", room);
+  console.log("count", countRoom);
   const handleBackToBuildings = () => {
     setSelectedBuilding(null)
   }
 
-  const handleBooking = (room) => {
-    // Giả lập quá trình xử lý đặt phòng
-    const isSuccess = Math.random() > 0.3 // 70% cơ hội thành công để demo cả 2 trường hợp
-
-    if (isSuccess) {
-      toast.success(`Đặt phòng ${room.name} thành công!`, {
-        description: "Vui lòng kiểm tra email để xác nhận thông tin.",
-        duration: 4000,
-      })
-    } else {
-      toast.error(`Đặt phòng ${room.name} thất bại!`, {
-        description: "Đã có lỗi xảy ra hoặc phòng vừa được đặt bởi người khác.",
-        duration: 4000,
-      })
+  const handleBooking =async(roomid) => {
+    try {
+      const res=await BookingRoom(userid,roomid);
+      if(res.success){
+        toast.success("Đặt phòng thành công");
+      }else{
+        toast.error(res.message);
+      }
+    } catch (error) {
+      toast.error("Đặt phòng thất bại");
+      console.log(error);
     }
   }
 
-  const currentRooms = selectedBuilding ? ROOMS_DATA.filter((room) => room.buildingId === selectedBuilding.id) : []
+  // const currentRooms = selectedBuilding ? ROOMS_DATA.filter((room) => room.buildingId === selectedBuilding.id) : []
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
@@ -84,22 +82,22 @@ function Dashboard() {
           <div>
             <h2 className="text-2xl font-bold mb-6 text-gray-800 border-l-4 border-blue-600 pl-3">Danh sách Tòa nhà</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {BUILDINGS.map((building) => (
+              {listSuites.map((building) => (
                 <div
                   key={building.id}
-                  onClick={() => handleBuildingClick(building)}
+                  onClick={() => handleBuildingClick(building.id)}
                   className="bg-white rounded-lg shadow-md hover:shadow-xl transition-all cursor-pointer border border-gray-200 overflow-hidden group"
                 >
                   <div className="h-48 overflow-hidden">
                     <img
-                      src={building.image || "/placeholder.svg"}
-                      alt={building.name}
+                      src={Suites || "/placeholder.svg"}
+                      alt={building.type}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   </div>
                   <div className="p-4">
-                    <h3 className="text-xl font-bold text-blue-700 mb-2">{building.name}</h3>
-                    <p className="text-gray-600 text-sm">{building.description}</p>
+                    <h3 className="text-xl font-bold text-blue-700 mb-2">{building.type}</h3>
+                    <p className="text-gray-600 text-sm">{building.content}</p>
                     <div className="mt-4 text-right">
                       <span className="text-blue-600 text-sm font-medium hover:underline">
                         Xem danh sách phòng &rarr;
@@ -172,7 +170,7 @@ function Dashboard() {
               </div>
 
               <div className="flex justify-between items-center mb-4 bg-white p-3 rounded border border-gray-200">
-                <span className="text-sm text-gray-600">Hiển thị {currentRooms.length} kết quả</span>
+                <span className="text-sm text-gray-600">Hiển thị {countRoom} kết quả</span>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-700">Sắp xếp:</span>
                   <select className="border border-gray-300 rounded px-2 py-1 text-sm">
@@ -184,7 +182,7 @@ function Dashboard() {
               </div>
 
               <div className="space-y-4">
-                {currentRooms.map((room) => (
+                {room.map((room) => (
                   <div
                     key={room.id}
                     className="bg-white rounded-lg border border-gray-300 p-4 flex flex-col md:flex-row gap-4 shadow-sm hover:shadow-md transition-shadow"
@@ -192,12 +190,12 @@ function Dashboard() {
                     {/* Image Placeholder */}
                     <div className="w-full md:w-1/3 h-40 bg-gray-100 rounded-md overflow-hidden border border-gray-200 relative">
                       <img
-                        src="/placeholder.svg?height=200&width=300&text=Phòng"
-                        alt={room.name}
+                        src={Room}
+                        alt={"phòng " + room.numberroom}
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs font-bold px-2 py-1 rounded">
-                        {room.type}
+                        {room.numberpeople } giường
                       </div>
                     </div>
 
@@ -205,47 +203,42 @@ function Dashboard() {
                     <div className="flex-1 flex flex-col justify-between">
                       <div>
                         <div className="flex justify-between items-start">
-                          <h3 className="font-bold text-xl text-gray-800 mb-2">{room.name}</h3>
-                          <span
+                          <h3 className="font-bold text-xl text-gray-800 mb-2">Phòng {room.numberroom}</h3>
+                          {/* <span
                             className={`px-2 py-1 rounded text-xs font-medium ${room.status === "Còn trống" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
                           >
                             {room.status}
-                          </span>
+                          </span> */}
                         </div>
 
                         <div className="flex items-start gap-1 text-gray-600 text-sm mb-3">
                           <MapPin size={16} className="mt-0.5 flex-shrink-0" />
                           <span>
-                            {selectedBuilding.name} - Tầng {Math.floor(room.id / 100)}
+                            {listSuites.type} - Tầng {room.numberoffloors}
                           </span>
                         </div>
                         <p className="text-gray-500 text-sm">
-                          Phòng tiêu chuẩn {room.type}, không gian thoáng mát, sạch sẽ.
+                          {room.content}
                         </p>
                       </div>
 
                       <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-100">
                         <div className="text-red-500 font-bold text-lg">
-                          Giá: {room.price} <span className="text-sm text-gray-500 font-normal">/ tháng</span>
+                          Giá: {formatPrice(room.price)} <span className="text-sm text-gray-500 font-normal">/ tháng</span>
                         </div>
                         <div className="flex gap-2">
                           <button
-                            onClick={() => handleBooking(room)}
-                            disabled={room.status !== "Còn trống"}
-                            className={`px-6 py-2 rounded text-sm font-bold shadow-sm flex items-center justify-center transition-colors ${
-                              room.status === "Còn trống"
-                                ? "bg-blue-600 text-white hover:bg-blue-700"
-                                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            }`}
+                            onClick={() => handleBooking(room.id)}
+                            className='px-6 py-2 rounded text-sm font-bold shadow-sm flex items-center justify-center transition-colors bg-blue-600 text-white hover:bg-blue-700'
                           >
-                            {room.status === "Còn trống" ? "Đặt phòng" : "Đã đầy"}
+                            Đặt phòng
                           </button>
                         </div>
                       </div>
                     </div>
                   </div>
                 ))}
-                {currentRooms.length === 0 && (
+                {countRoom === 0 && (
                   <div className="text-center py-12 text-gray-500">Chưa có dữ liệu phòng cho tòa nhà này.</div>
                 )}
               </div>
